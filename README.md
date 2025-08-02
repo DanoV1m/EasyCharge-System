@@ -74,4 +74,5 @@ A C development environment is required to compile and run the project.
 
 After compiling, run the program with:
 ```bash
+
 ./bin/easycharge
