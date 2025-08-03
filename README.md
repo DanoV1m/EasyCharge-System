@@ -3,7 +3,11 @@
 This document provides a comprehensive introduction to the EasyCharge system, a command-line electric vehicle charging station management application written in C. It covers the system's purpose, key capabilities, high-level architecture, and core design principles.
 
 ### A Personal Note
-This project is more than just code to me. As a first-year Electrical Engineering student, this was my final project for the "Advanced C Programming" course. While the academic requirement was to build a functional system, I decided to take it a step further. My goal was to transform a university assignment into a comprehensive, professionally structured, and well-documented project. I'm uploading it to GitHub as the first step in building a quality portfolio that will accompany me throughout my career.
+This project is more than just code to me.
+As a first-year Electrical Engineering student, this was my final project for the "Advanced C Programming" course.
+While the academic requirement was to build a functional system, I decided to take it a step further.
+My goal was to transform a university assignment into a comprehensive, professionally structured, and well-documented project.
+I'm uploading it to GitHub as the first step in building a quality portfolio that will accompany me throughout my career.
 
 ---
 
@@ -93,3 +97,4 @@ This section covers how the application is compiled and run.
 *   **[➡️ View Full Build System Document](BUILD_SYSTEM.md)**
     *   **[📄 Compilation and Build Process](COMPILATION_PROCESS.md)**
     *   **[📄 Application Entry Point and Menu System](APPLICATION_ENTRY_POINT.md)**
+
