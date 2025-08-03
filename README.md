@@ -1,78 +1,95 @@
-# EasyCharge - An EV Charging Station Management System
+# EasyCharge System Overview
+
+This document provides a comprehensive introduction to the EasyCharge system, a command-line electric vehicle charging station management application written in C. It covers the system's purpose, key capabilities, high-level architecture, and core design principles.
 
 ### A Personal Note
+This project is more than just code to me. As a first-year Electrical Engineering student, this was my final project for the "Advanced C Programming" course. While the academic requirement was to build a functional system, I decided to take it a step further. My goal was to transform a university assignment into a comprehensive, professionally structured, and well-documented project. I'm uploading it to GitHub as the first step in building a quality portfolio that will accompany me throughout my career.
 
-This project is more than just code to me.
- As a first-year Electrical Engineering student, this was my final project for the "Advanced C Programming" course. 
-While the academic requirement was to build a functional system, I decided to take it a step further.
- My goal was to transform a university assignment into a comprehensive, professionally structured, and well-documented project.
- I'm uploading it to GitHub as the first step in building a quality portfolio that will accompany me throughout my career.
+---
 
-## 📖 Project Overview
+## System Purpose and Capabilities
 
-EasyCharge is a command-line interface (CLI) application written in C that simulates a comprehensive management system for a network of electric vehicle (EV) charging stations. The system manages a database of stations, customers (vehicles), and charging ports, allowing for a wide range of administrative actions.
+EasyCharge is a CLI application that simulates a comprehensive management system for a network of electric vehicle charging stations. The system manages stations, customers, and charging ports through an interactive menu interface, with all data persisted to text files for session continuity.
 
-The entire state of the system is loaded from and saved to text files, ensuring data persistence across sessions.
+### Core Functional Areas
 
-## ✨ Key Features
+| Area | Capabilities |
+| :--- | :--- |
+| **Station Management** | Load station data, add new stations, locate nearest station by coordinates, safely close stations, remove malfunctioning ports. |
+| **Customer Operations** | Auto-register customers, assign vehicles to appropriate ports, manage FIFO waiting queues, calculate dynamic pricing. |
+| **Monitoring & Reporting** | Display system status, generate port statistics, track customer rankings, monitor charging sessions. |
+| **Automated Maintenance**| Release ports after timeout, process waiting queues, maintain data consistency. |
 
-*   **Station Management:**
-    *   Load station data from external files.
-    *   Add new stations and charging ports to the system.
-    *   Locate the nearest station based on user coordinates.
-    *   Safely close a station (only if no cars are charging or waiting).
-    *   Remove a malfunctioning port from a station.
+---
 
-*   **Customer & Charging Process Management:**
-    *   Automatically register new customers to the database.
-    *   Assign a vehicle to a free port that matches its required charging type (Fast, Mid, Slow).
-    *   Manage an orderly queue (FIFO) for vehicles when no suitable port is available.
-    *   Stop a charging session, dynamically calculate the cost based on duration and port type, and update the customer's total payment.
-    *   Remove a customer from the system.
+## System Architecture
 
-*   **Reporting & Monitoring:**
-    *   Display all stations in the system with a status summary.
-    *   Show a detailed list of all vehicles (both charging and waiting) at a specific station.
-    *   Generate a detailed statistical report on port status (Occupied, Free, Out of Order) for any station.
-    *   Check the status of a specific vehicle in the system (Charging, Waiting, or Idle).
-    *   Display a ranking of the top 5 customers by total payments.
+The EasyCharge system follows a modular, layered architecture. The diagram below illustrates the core entities of the system—Stations, Customers, Ports, and Queues—and their relationships. It also highlights the data structures chosen for performance optimization.
 
-*   **Automated Maintenance:**
-    *   Automatically release ports that have been occupied for longer than a predefined time limit (e.g., two hours).
+![Core Entity Relationships Diagram](Assets/entity-relationships.png)
 
-## 🧠 Data Structures in Use
+---
 
-This project demonstrates the use of classic data structures for efficient data management:
-*   **Binary Search Tree (BST):** Used for fast management and lookup of stations (by ID) and customers (by license plate number).
-*   **Queue (FIFO):** Implemented using a linked list to fairly manage waiting vehicles at busy stations.
-*   **Linked List:** Used to manage the collection of charging ports belonging to each station.
+## Building and Running the Project
 
-## 🛠️ Setup and Usage
+To compile and run the application, follow these steps:
 
-A C development environment is required to compile and run the project.
-
-### Prerequisites
-*   A C compiler (like `gcc`).
-*   The `make` build tool.
-    *   *On Windows, you can easily get these tools by installing **MSYS2**.*
-
-### Building the Project
-
-1.  Clone the repository to your local machine:
+1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/DanoV1m/EasyCharge-System.git
-    cd EasyCharge-System
+    git clone [your-repository-url]
     ```
 
-2.  To compile the project, run the following command in the root directory:
+2.  **Navigate to the project directory:**
     ```bash
-    make
+    cd [project-directory-name]
     ```
-    This command will automatically create a `build` directory (for object files) and a `bin` directory (for the final executable).
 
-### Running the Program
+3.  **Compile the project:**
+    The `Makefile` will create `build/` and `bin/` directories and place the final executable inside `bin/`.
+    ```bash
+    make all
+    ```
 
-After compiling, run the program with:
-```bash
+4.  **Run the application:**
+    ```bash
+    ./bin/easycharge
+    ```
 
-./bin/easycharge
+5.  **Clean the project:**
+    To remove all build artifacts, use the `clean` command.
+    ```bash
+    make clean
+    ```
+---
+
+## Project Documentation
+
+This project is extensively documented. The following sections provide links to detailed documents covering every aspect of the system's design and implementation.
+
+### System Design and Architecture
+*   **[➡️ View Full System Architecture Document](SYSTEM_ARCHITECTURE.md)**
+*   **[➡️ View Full Data Structures and Algorithms Document](DATA_STRUCTURES.md)**
+*   **[➡️ View Full Core Entity Relationships Document](ENTITY_RELATIONSHIPS.md)**
+
+### Core System Modules
+*   **[➡️ View Full Station Management Document](STATION_MANAGEMENT.md)**
+*   **[➡️ View Full Customer and Vehicle Management Document](CUSTOMER_MANAGEMENT.md)**
+*   **[➡️ View Full Charging Port Operations Document](CHARGING_PORT_OPERATIONS.md)**
+*   **[➡️ View Full Queue Management System Document](QUEUE_MANAGEMENT.md)**
+*   **[➡️ View Full Charging Process Workflow Document](CHARGING_WORKFLOW.md)**
+*   **[➡️ View Full Implementation Details Document](IMPLEMENTATION_DETAILS.md)**
+
+### Data Persistence and File Formats
+This section details the strategy for saving and loading data.
+*   **[➡️ View Full Data Persistence Strategy Document](DATA_PERSISTENCE.md)**
+*   **[➡️ View Full Data Files and Formats Overview](DATA_FILES_AND_FORMATS.md)**
+    *   **[📄 Station Configuration Data](STATION_CONFIGURATION.md)**
+    *   **[📄 Vehicle and Customer Data](VEHICLE_CUSTOMER_DATA.md)**
+    *   **[📄 Port Configuration and Status](PORT_CONFIGURATION.md)**
+    *   **[📄 Queue State Management](QUEUE_STATE_MANAGEMENT.md)**
+
+### Build and Execution
+This section covers how the application is compiled and run.
+*   **[➡️ View Full Build System Document](BUILD_SYSTEM.md)**
+    *   **[📄 Compilation and Build Process](COMPILATION_PROCESS.md)**
+    *   **[📄 Application Entry Point and Menu System](APPLICATION_ENTRY_POINT.md)**
