@@ -30,7 +30,7 @@ EasyCharge is a CLI application that simulates a comprehensive management system
 
 The EasyCharge system follows a modular, layered architecture. The diagram below illustrates the core entities of the system—Stations, Customers, Ports, and Queues—and their relationships. It also highlights the data structures chosen for performance optimization.
 
-![Core Entity Relationships Diagram](Assets/entity-relationships.png)
+![Entity Relationship Schema](Architecture%20Documentation/Core%20Entity%20Relationships/entity-relationship-schema.png)
 
 ---
 
@@ -97,4 +97,5 @@ This section covers how the application is compiled and run.
 *   **[➡️ View Full Build System Document](BUILD_SYSTEM.md)**
     *   **[📄 Compilation and Build Process](COMPILATION_PROCESS.md)**
     *   **[📄 Application Entry Point and Menu System](APPLICATION_ENTRY_POINT.md)**
+
 
