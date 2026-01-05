@@ -38,3 +38,7 @@ Follow these steps to compile and run the application:
    ```bash
 
    git clone https://github.com/DanoV1m/EasyCharge-System.git
+
+   ---
+*Designed and implemented by [Idan Vimenetz]*
+
