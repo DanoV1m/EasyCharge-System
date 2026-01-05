@@ -27,7 +27,7 @@ Explore the detailed engineering and system documentation:
 ## 🏗️ System Architecture
 The system follows a modular architecture. Below is a high-level overview of the entity relationships:
 
-![Entity Relationship Schema](docs/Architecture%20Documentation/entity-relationship-schema.png)
+![Entity Relationship Schema](docs/Architecture%20Documentation/entity-relationships.png)
 
 ---
 
