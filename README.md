@@ -32,6 +32,8 @@ The system follows a modular architecture. Below is a high-level overview of the
 ---
 
 ## 🛠️ Installation & Build
+Follow these steps to compile and run the application:
+
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/DanoV1m/EasyCharge-System.git](https://github.com/DanoV1m/EasyCharge-System.git)
+   git clone https://github.com/DanoV1m/EasyCharge-System.git
