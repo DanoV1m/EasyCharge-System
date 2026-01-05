@@ -16,11 +16,9 @@ As a first-year **Electrical Engineering** student, this was my final project fo
 ## 📚 Documentation Hub
 Explore the detailed engineering and system documentation (Now organized in the `/docs` directory):
 
-| 📘 Architecture & Logic | ⚙️ System Operations | 💾 Data & Files |
-| :--- | :--- | :--- |
-| [➡️ System Architecture](docs/SYSTEM_ARCHITECTURE.md) | [➡️ Charging Workflow](docs/CHARGING_WORKFLOW.md) | [➡️ Data Persistence](docs/DATA_PERSISTENCE.md) |
-| [➡️ Data Structures](docs/DATA_STRUCTURES.md) | [➡️ Station Management](docs/STATION_MANAGEMENT.md) | [➡️ File Formats](docs/DATA_FILES_AND_FORMATS.md) |
-| [➡️ Entity Relationships](docs/ENTITY_RELATIONSHIPS.md) | [➡️ Queue Management](docs/QUEUE_MANAGEMENT.md) | [➡️ Build System](docs/BUILD_SYSTEM.md) |
+The EasyCharge system follows a modular, layered architecture. The diagram below illustrates the core entities of the system—Stations, Customers, Ports, and Queues—and their relationships. It also highlights the data structures chosen for performance optimization.
+
+![Entity Relationship Schema](Architecture%20Documentation/Core%20Entity%20Relationships/entity-relationship-schema.png)
 
 ---
 
@@ -39,7 +37,3 @@ The system follows a modular architecture. Below is a high-level overview of the
 
 ---
 
-## 🛠️ Installation & Build
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/DanoV1m/EasyCharge-System.git](https://github.com/DanoV1m/EasyCharge-System.git)
