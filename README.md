@@ -48,3 +48,5 @@ The review branch fixes two-child BST deletion, bounded CSV parsing, queue alloc
 
 ### Persistence review
 All four outputs are staged before replacement. POSIX per-file rename is used; group atomicity, crash durability, concurrent writers and Windows replacement semantics are not guaranteed. Use a disposable data directory and keep backups. The CLI regression tests deletion of two-child nodes and a forced staging failure.
+
+Windows uses `MoveFileExA` with replace-existing semantics; POSIX uses rename. Both are tested with disposable synthetic data via CI. Multi-file crash consistency still requires a transaction or a journaled database; do not use for irreplaceable data.

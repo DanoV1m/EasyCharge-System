@@ -14,3 +14,12 @@ jobs:
       - run: mkdir -p /tmp/easycharge-smoke && cp -r data /tmp/easycharge-smoke/ && cd /tmp/easycharge-smoke && printf '5\n0\n' | /tmp/easycharge
 
       - run: python3 tests/test_persistence.py /tmp/easycharge
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - run: gcc -std=c11 -Wall -Wextra -Iinclude src/*.c -lm -o easycharge.exe
+      - run: python tests/test_persistence.py easycharge.exe

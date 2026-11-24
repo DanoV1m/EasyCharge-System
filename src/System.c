@@ -1,5 +1,16 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "System.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+static int replaceFile(const char* staged, const char* target) {
+#ifdef _WIN32
+    return MoveFileExA(staged, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) ? 0 : -1;
+#else
+    return rename(staged, target);
+#endif
+}
 #define MAX_LINE_LEN 256  // defines the maximum length for a line buffer when reading lines from files
 
 /* this is a helper function to convert a port type string to its enum equivalent
@@ -161,7 +172,7 @@ void updateFiles(Station* stationsRoot, tCar* carsRoot) {
         return;
     }
     for (int i = 0; i < 4; ++i) {
-        if (rename(staged[i], target[i]) != 0) {
+        if (replaceFile(staged[i], target[i]) != 0) {
             fprintf(stderr, "Save replacement failed; staged files may be needed for recovery.\n");
             return;
         }
