@@ -33,7 +33,8 @@ with tempfile.TemporaryDirectory() as tmp:
     assert not (data / "Cars.txt.tmp").exists()
 
     # A missing input or malformed row must never trigger a partial-state save.
-    (data / "Ports.txt.tmp").rmdir()
+    if (data / "Ports.txt.tmp").is_dir():
+        (data / "Ports.txt.tmp").rmdir()
     (data / "LineOfCars.txt").unlink()
     originals = {p.name:p.read_bytes() for p in data.iterdir()}
     result = subprocess.run([binary], input="0\n", text=True, cwd=root, timeout=15, capture_output=True)
