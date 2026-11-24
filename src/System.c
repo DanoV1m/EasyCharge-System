@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "System.h"
+#include <math.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -16,6 +17,9 @@ static int replaceFile(const char* staged, const char* target) {
 /* this is a helper function to convert a port type string to its enum equivalent
    input: const char* str - the string to convert
    output: PortType - the corresponding enum value */
+static int validPortType(const char* value) {
+    return strcmp(value,"FAST")==0 || strcmp(value,"MID")==0 || strcmp(value,"SLOW")==0;
+}
 static PortType stringToPortType(const char* str) {
     if (strcmp(str, "FAST") == 0)
         return PORT_TYPE_FASR;
@@ -38,8 +42,10 @@ int loadFiles(Station** stationsRoot, tCar** carsRoot) {
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int id, numPorts; char name[100]; double x, y;
         if (sscanf(line_buffer, "%d,%99[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y) != 5) { fclose(fp); return 0; }
+        if (numPorts<0 || !isfinite(x) || !isfinite(y) || searchStationByID(*stationsRoot,id)) { fclose(fp); return 0; }
         Station* st = createStation(id, name, numPorts, x, y);
-        if (st) *stationsRoot = addStationToBST(*stationsRoot, st);
+        if (!st) { fclose(fp); return 0; }
+        *stationsRoot = addStationToBST(*stationsRoot, st);
     }
     if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
@@ -53,12 +59,14 @@ int loadFiles(Station** stationsRoot, tCar** carsRoot) {
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         char license[10], portTypeStr[10]; double totalPayed; int inQueue;
         if (sscanf(line_buffer, "%9[^,],%9[^,],%lf,%*d,%d", license, portTypeStr, &totalPayed, &inQueue) != 4) { fclose(fp); return 0; }
+        if (!validPortType(portTypeStr) || !isfinite(totalPayed) || totalPayed<0 || (inQueue!=0 && inQueue!=1) || searchCar(*carsRoot,license)) { fclose(fp); return 0; }
         Car* newCar = createCar(license, stringToPortType(portTypeStr));
-        if (newCar) { // safety check
-            newCar->totalPayed = totalPayed;
-            newCar->inqueue = inQueue;
-            *carsRoot = addCarToBST(*carsRoot, newCar);
-        }
+        if (!newCar) { fclose(fp); return 0; }
+        newCar->totalPayed = totalPayed;
+        // Queue membership is rebuilt from queue records, not trusted flags.
+        newCar->inqueue = 0;
+        *carsRoot = addCarToBST(*carsRoot, newCar);
+        if (searchCar(*carsRoot,license)!=newCar) { free(newCar); fclose(fp); return 0; }
     }
     if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
@@ -74,19 +82,21 @@ int loadFiles(Station** stationsRoot, tCar** carsRoot) {
         char portTypeStr[10], carLicense[20] = "NULL";
         if (sscanf(line_buffer, "%d,%d,%9[^,],%d,%d,%d,%d,%d,%d,%19s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense) != 10) { fclose(fp); return 0; }
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
-        if (targetStation) {
-            Port* newPort = createPort(portNum, stringToPortType(portTypeStr));
-            if (newPort) { // safety check
-                newPort->status = (PortStatus)status;
-                addPortToList(&targetStation->port_list_head, newPort);
-                if (newPort->status == OCCUPIED && strcmp(carLicense, "NULL") != 0) {
-                    Car* targetCar = searchCar(*carsRoot, carLicense);
-                    if (targetCar) {
-                        assignCar2port(targetCar, newPort);
-                        newPort->chargeStartTime = (Date){ year, month, day, hour, min };
-                    }
-                }
-            }
+        if (!targetStation || !validPortType(portTypeStr) || (status!=OCCUPIED && status!=FREE && status!=OUT_OF_ORDER)) { fclose(fp); return 0; }
+        for (Port* p=targetStation->port_list_head; p; p=p->next)
+            if (p->num==portNum) { fclose(fp); return 0; }
+        Car* targetCar=NULL;
+        if (status==OCCUPIED) {
+            targetCar=searchCar(*carsRoot,carLicense);
+            if (!targetCar || targetCar->pPort) { fclose(fp); return 0; }
+        } else if (strcmp(carLicense,"NULL")!=0) { fclose(fp); return 0; }
+        Port* newPort=createPort(portNum,stringToPortType(portTypeStr));
+        if (!newPort) { fclose(fp); return 0; }
+        newPort->status=(PortStatus)status;
+        addPortToList(&targetStation->port_list_head,newPort);
+        if (targetCar) {
+            assignCar2port(targetCar,newPort);
+            newPort->chargeStartTime=(Date){year,month,day,hour,min};
         }
     }
     if (ferror(fp)) { fclose(fp); return 0; }
@@ -103,11 +113,10 @@ int loadFiles(Station** stationsRoot, tCar** carsRoot) {
         if (sscanf(line_buffer, "%19[^,],%d", carLicense, &stationId) != 2) { fclose(fp); return 0; }
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
         Car* targetCar = searchCar(*carsRoot, carLicense);
-        if (targetStation && targetCar) {
-            if (!enqueue(&targetStation->carQueue, targetCar)) continue;
-            targetStation->nCars++;
-            targetCar->inqueue = 1; 
-        }
+        if (!targetStation || !targetCar || targetCar->pPort || targetCar->inqueue) { fclose(fp); return 0; }
+        if (!enqueue(&targetStation->carQueue,targetCar)) { fclose(fp); return 0; }
+        targetStation->nCars++;
+        targetCar->inqueue=1;
     }
     if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);

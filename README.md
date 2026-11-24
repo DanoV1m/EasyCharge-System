@@ -1,10 +1,9 @@
 # EasyCharge System
 ![Language](https://img.shields.io/badge/Language-C-blue.svg)
-![Status](https://img.shields.io/badge/Status-Complete-green.svg)
+![Status](https://img.shields.io/badge/Status-Review_candidate-blue.svg)
 ![Field](https://img.shields.io/badge/Field-Electrical%20Engineering-orange.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**A professional EV Charging Station Management System built for high-scale simulation and data persistence.**
+**An educational EV charging station management simulator demonstrating C data structures and file persistence.**
 
 ---
 
@@ -52,3 +51,5 @@ All four outputs are staged before replacement. POSIX per-file rename is used; g
 Windows uses `MoveFileExA` with replace-existing semantics; POSIX uses rename. Both are tested with disposable synthetic data via CI. Multi-file crash consistency still requires a transaction or a journaled database; do not use for irreplaceable data.
 
 Startup now aborts without writing when a required input file is missing, unreadable or a row fails the expected field parsing. This is not full semantic validation or transactional storage. Regression cases exercise missing and malformed inputs against disposable data.
+
+Startup validation also rejects duplicate station/car/port identifiers, invalid port types/statuses and dangling or duplicate queue/charging assignments. This is still not a complete CSV parser or crash-safe transaction system. No license is asserted without an explicit license file.

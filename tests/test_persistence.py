@@ -45,3 +45,10 @@ with tempfile.TemporaryDirectory() as tmp:
     result = subprocess.run([binary], input="0\n", text=True, cwd=root, timeout=15, capture_output=True)
     assert result.returncode != 0
     assert {p.name:p.read_bytes() for p in data.iterdir()} == originals
+
+    # Referentially invalid but syntactically valid input must not be rewritten.
+    (data / "LineOfCars.txt").write_text("CarLicense,StationID\nmissing,10\n")
+    originals = {p.name:p.read_bytes() for p in data.iterdir()}
+    result = subprocess.run([binary], input="0\n", text=True, cwd=root, timeout=15, capture_output=True)
+    assert result.returncode != 0
+    assert {p.name:p.read_bytes() for p in data.iterdir()} == originals
