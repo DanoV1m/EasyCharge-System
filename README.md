@@ -1,10 +1,9 @@
 # EasyCharge System
 ![Language](https://img.shields.io/badge/Language-C-blue.svg)
-![Status](https://img.shields.io/badge/Status-Complete-green.svg)
+![Status](https://img.shields.io/badge/Status-Review_candidate-blue.svg)
 ![Field](https://img.shields.io/badge/Field-Electrical%20Engineering-orange.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**A professional EV Charging Station Management System built for high-scale simulation and data persistence.**
+**An educational EV charging station management simulator demonstrating C data structures and file persistence.**
 
 ---
 
@@ -32,13 +31,25 @@ The system follows a modular architecture. Below is a high-level overview of the
 ---
 
 ## Installation & Build
-Follow these steps to compile and run the application:
 
-1. **Clone the repository:**
-   ```bash
+From the repository root, with GCC and Make installed:
 
-   git clone https://github.com/DanoV1m/EasyCharge-System.git
+```sh
+make
+./bin/easycharge
+```
 
-   ---
-*Designed and implemented by [Idan Vimenetz]*
+Run against a disposable copy of the sample data; this simulator modifies its data files. It is not a production EV charging service.
 
+## Validation and limitations
+
+The review branch fixes two-child BST deletion, bounded CSV parsing, queue allocation and EOF handling. Run sanitizer-enabled builds and regression tests before use. Multi-file persistence is still non-transactional and requires a separate redesign.
+
+### Persistence review
+All four outputs are staged before replacement. POSIX per-file rename is used; group atomicity, crash durability, concurrent writers and Windows replacement semantics are not guaranteed. Use a disposable data directory and keep backups. The CLI regression tests deletion of two-child nodes and a forced staging failure.
+
+Windows uses `MoveFileExA` with replace-existing semantics; POSIX uses rename. Both are tested with disposable synthetic data via CI. Multi-file crash consistency still requires a transaction or a journaled database; do not use for irreplaceable data.
+
+Startup now aborts without writing when a required input file is missing, unreadable or a row fails the expected field parsing. This is not full semantic validation or transactional storage. Regression cases exercise missing and malformed inputs against disposable data.
+
+Startup validation also rejects duplicate station/car/port identifiers, invalid port types/statuses and dangling or duplicate queue/charging assignments. This is still not a complete CSV parser or crash-safe transaction system. No license is asserted without an explicit license file.

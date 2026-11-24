@@ -1,10 +1,25 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "System.h"
+#include <math.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+static int replaceFile(const char* staged, const char* target) {
+#ifdef _WIN32
+    return MoveFileExA(staged, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) ? 0 : -1;
+#else
+    return rename(staged, target);
+#endif
+}
 #define MAX_LINE_LEN 256  // defines the maximum length for a line buffer when reading lines from files
 
 /* this is a helper function to convert a port type string to its enum equivalent
    input: const char* str - the string to convert
    output: PortType - the corresponding enum value */
+static int validPortType(const char* value) {
+    return strcmp(value,"FAST")==0 || strcmp(value,"MID")==0 || strcmp(value,"SLOW")==0;
+}
 static PortType stringToPortType(const char* str) {
     if (strcmp(str, "FAST") == 0)
         return PORT_TYPE_FASR;
@@ -14,87 +29,98 @@ static PortType stringToPortType(const char* str) {
 }
 
 // loads all data from txt files into the systems memory
-void loadFiles(Station** stationsRoot, tCar** carsRoot) {
+int loadFiles(Station** stationsRoot, tCar** carsRoot) {
     FILE* fp = NULL;
     char line_buffer[MAX_LINE_LEN];
 
     // load Stations from data folder
     if ((fp = fopen("data/Stations.txt", "r")) == NULL) { 
         perror("Error opening data/Stations.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int id, numPorts; char name[100]; double x, y;
-        sscanf(line_buffer, "%d,%[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y);
-        *stationsRoot = addStationToBST(*stationsRoot, createStation(id, name, numPorts, x, y));
+        if (sscanf(line_buffer, "%d,%99[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y) != 5) { fclose(fp); return 0; }
+        if (numPorts<0 || !isfinite(x) || !isfinite(y) || searchStationByID(*stationsRoot,id)) { fclose(fp); return 0; }
+        Station* st = createStation(id, name, numPorts, x, y);
+        if (!st) { fclose(fp); return 0; }
+        *stationsRoot = addStationToBST(*stationsRoot, st);
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
 
     // load Cars from data folder
     if ((fp = fopen("data/Cars.txt", "r")) == NULL) { 
         perror("Error opening data/Cars.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         char license[10], portTypeStr[10]; double totalPayed; int inQueue;
-        sscanf(line_buffer, "%[^,],%[^,],%lf,%*d,%*d,%d", license, portTypeStr, &totalPayed, &inQueue);
+        if (sscanf(line_buffer, "%9[^,],%9[^,],%lf,%*d,%d", license, portTypeStr, &totalPayed, &inQueue) != 4) { fclose(fp); return 0; }
+        if (!validPortType(portTypeStr) || !isfinite(totalPayed) || totalPayed<0 || (inQueue!=0 && inQueue!=1) || searchCar(*carsRoot,license)) { fclose(fp); return 0; }
         Car* newCar = createCar(license, stringToPortType(portTypeStr));
-        if (newCar) { // safety check
-            newCar->totalPayed = totalPayed;
-            newCar->inqueue = inQueue;
-            *carsRoot = addCarToBST(*carsRoot, newCar);
-        }
+        if (!newCar) { fclose(fp); return 0; }
+        newCar->totalPayed = totalPayed;
+        // Queue membership is rebuilt from queue records, not trusted flags.
+        newCar->inqueue = 0;
+        *carsRoot = addCarToBST(*carsRoot, newCar);
+        if (searchCar(*carsRoot,license)!=newCar) { free(newCar); fclose(fp); return 0; }
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
 
     // load Ports from data folder
     if ((fp = fopen("data/Ports.txt", "r")) == NULL) { 
         perror("Error opening data/Ports.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int stationId, portNum, status, year, month, day, hour, min;
         char portTypeStr[10], carLicense[20] = "NULL";
-        sscanf(line_buffer, "%d,%d,%[^,],%d,%d,%d,%d,%d,%d,%s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense);
+        if (sscanf(line_buffer, "%d,%d,%9[^,],%d,%d,%d,%d,%d,%d,%19s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense) != 10) { fclose(fp); return 0; }
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
-        if (targetStation) {
-            Port* newPort = createPort(portNum, stringToPortType(portTypeStr));
-            if (newPort) { // safety check
-                newPort->status = (PortStatus)status;
-                addPortToList(&targetStation->port_list_head, newPort);
-                if (newPort->status == OCCUPIED && strcmp(carLicense, "NULL") != 0) {
-                    Car* targetCar = searchCar(*carsRoot, carLicense);
-                    if (targetCar) {
-                        assignCar2port(targetCar, newPort);
-                        newPort->chargeStartTime = (Date){ year, month, day, hour, min };
-                    }
-                }
-            }
+        if (!targetStation || !validPortType(portTypeStr) || (status!=OCCUPIED && status!=FREE && status!=OUT_OF_ORDER)) { fclose(fp); return 0; }
+        for (Port* p=targetStation->port_list_head; p; p=p->next)
+            if (p->num==portNum) { fclose(fp); return 0; }
+        Car* targetCar=NULL;
+        if (status==OCCUPIED) {
+            targetCar=searchCar(*carsRoot,carLicense);
+            if (!targetCar || targetCar->pPort) { fclose(fp); return 0; }
+        } else if (strcmp(carLicense,"NULL")!=0) { fclose(fp); return 0; }
+        Port* newPort=createPort(portNum,stringToPortType(portTypeStr));
+        if (!newPort) { fclose(fp); return 0; }
+        newPort->status=(PortStatus)status;
+        addPortToList(&targetStation->port_list_head,newPort);
+        if (targetCar) {
+            assignCar2port(targetCar,newPort);
+            newPort->chargeStartTime=(Date){year,month,day,hour,min};
         }
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
 
     // load Car Queues from data folder
     if ((fp = fopen("data/LineOfCars.txt", "r")) == NULL) { 
         perror("Error opening data/LineOfCars.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int stationId; char carLicense[20];
-        sscanf(line_buffer, "%[^,],%d", carLicense, &stationId);
+        if (sscanf(line_buffer, "%19[^,],%d", carLicense, &stationId) != 2) { fclose(fp); return 0; }
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
         Car* targetCar = searchCar(*carsRoot, carLicense);
-        if (targetStation && targetCar) {
-            enqueue(&targetStation->carQueue, targetCar);
-            targetStation->nCars++;
-            targetCar->inqueue = 1; 
-        }
+        if (!targetStation || !targetCar || targetCar->pPort || targetCar->inqueue) { fclose(fp); return 0; }
+        if (!enqueue(&targetStation->carQueue,targetCar)) { fclose(fp); return 0; }
+        targetStation->nCars++;
+        targetCar->inqueue=1;
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
+    return 1;
 }
 
 static const char* portTypeToString(PortType type) {
@@ -130,40 +156,41 @@ static void saveStationsRecursive(FILE* stations_fp, FILE* ports_fp, FILE* queue
     saveStationsRecursive(stations_fp, ports_fp, queues_fp, root->right);
 }
 
+// Stage all four files before replacing any existing data file.
+// Each rename is atomic on POSIX, but the group is NOT a transaction.
 void updateFiles(Station* stationsRoot, tCar* carsRoot) {
-    FILE* fp = NULL;
-
-    // save Cars to data folder
-    if ((fp = fopen("data/Cars.txt", "w")) == NULL) { 
-        perror("Error opening data/Cars.txt for writing"); 
-        return; 
+    const char* target[] = {"data/Cars.txt", "data/Stations.txt", "data/Ports.txt", "data/LineOfCars.txt"};
+    const char* staged[] = {"data/Cars.txt.tmp", "data/Stations.txt.tmp", "data/Ports.txt.tmp", "data/LineOfCars.txt.tmp"};
+    FILE* files[4] = {NULL, NULL, NULL, NULL};
+    int ok = 1;
+    for (int i = 0; i < 4; ++i) {
+        files[i] = fopen(staged[i], "w");
+        if (!files[i]) { ok = 0; break; }
     }
-    fprintf(fp, "License,Type,TotalPaid,IsCharging,IsInQueue,DummyValue\n");
-    saveCarsRecursive(fp, carsRoot);
-    fclose(fp);
-
-    FILE* stations_fp = fopen("data/Stations.txt", "w");
-    FILE* ports_fp = fopen("data/Ports.txt", "w");
-    FILE* queues_fp = fopen("data/LineOfCars.txt", "w");
-
-    if (!stations_fp || !ports_fp || !queues_fp) {
-        perror("Error opening data files for writing");
-        if (stations_fp) fclose(stations_fp);
-        if (ports_fp) fclose(ports_fp);
-        if (queues_fp) fclose(queues_fp);
+    if (ok) {
+        fprintf(files[0], "License,Type,TotalPaid,IsCharging,IsInQueue,DummyValue\n");
+        saveCarsRecursive(files[0], carsRoot);
+        fprintf(files[1], "ID,Name,NumPorts,CoordX,CoordY\n");
+        fprintf(files[2], "StationID,PortNum,Type,Status,Year,Month,Day,Hour,Min,CarLicense\n");
+        fprintf(files[3], "CarLicense,StationID\n");
+        saveStationsRecursive(files[1], files[2], files[3], stationsRoot);
+    }
+    for (int i = 0; i < 4; ++i) {
+        if (!files[i]) continue;
+        if (ferror(files[i])) ok = 0;
+        if (fclose(files[i]) != 0) ok = 0;
+    }
+    if (!ok) {
+        fprintf(stderr, "Save staging failed; original data files were not modified.\n");
+        for (int i = 0; i < 4; ++i) remove(staged[i]);
         return;
     }
-
-    fprintf(stations_fp, "ID,Name,NumPorts,CoordX,CoordY\n");
-    fprintf(ports_fp, "StationID,PortNum,Type,Status,Year,Month,Day,Hour,Min,CarLicense\n");
-    fprintf(queues_fp, "CarLicense,StationID\n");
-
-    saveStationsRecursive(stations_fp, ports_fp, queues_fp, stationsRoot);
-
-    fclose(stations_fp);
-    fclose(ports_fp);
-    fclose(queues_fp);
-
+    for (int i = 0; i < 4; ++i) {
+        if (replaceFile(staged[i], target[i]) != 0) {
+            fprintf(stderr, "Save replacement failed; staged files may be needed for recovery.\n");
+            return;
+        }
+    }
     printf("System state saved to data folder.\n");
 }
 

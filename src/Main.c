@@ -10,7 +10,12 @@ int main() {
     int needs_update = 0; // signal to determine if files need to be saved
 
     printf("Loading system data from files...\n");
-    loadFiles(&stationsRoot, &carsRoot);
+    if (!loadFiles(&stationsRoot, &carsRoot)) {
+        fprintf(stderr, "Data load failed; existing files will not be modified.\n");
+        freeStationsBST(stationsRoot);
+        freeCarsBST(carsRoot);
+        return 1;
+    }
     printf("Data loaded.\n");
 
         // this is the main program loop. it continues until the user chooses to exit
@@ -20,7 +25,8 @@ int main() {
         // get and check user input
         if (scanf("%d", &choice) != 1) {
             printf("\nERROR: Invalid input. Please enter a number.\n");
-            while (getchar() != '\n'); // clear the input buffer to prevent a loop
+            { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } // clear the input buffer to prevent a loop
+            if (feof(stdin)) { freeStationsBST(stationsRoot); freeCarsBST(carsRoot); return 0; }
             choice = -1; // set to an invalid choice to force the loop to repeat
             continue;
         }

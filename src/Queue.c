@@ -23,10 +23,11 @@ int isQueueEmpty(const CarQueue* q) {
  input: CarQueue* q - a pointer to the queue to be modified
  input: struct Car* car - the car to be added to the queue */
 
-void enqueue(CarQueue* q, struct Car* car) {
+int enqueue(CarQueue* q, struct Car* car) {
     // create a new node to hold the car pointer
     QueueNode* node = (QueueNode*)malloc(sizeof(QueueNode));
 
+    if (!node) return 0;
     node->p2car = car;
     node->next = NULL;
 
@@ -40,6 +41,7 @@ void enqueue(CarQueue* q, struct Car* car) {
         q->rear->next = node;
         q->rear = node;
     }
+    return 1;
 }
 
 // removes the car pointer from the front of the queue and returns it
