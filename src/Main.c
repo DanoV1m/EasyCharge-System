@@ -20,7 +20,8 @@ int main() {
         // get and check user input
         if (scanf("%d", &choice) != 1) {
             printf("\nERROR: Invalid input. Please enter a number.\n");
-            while (getchar() != '\n'); // clear the input buffer to prevent a loop
+            { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } // clear the input buffer to prevent a loop
+            if (feof(stdin)) { freeStationsBST(stationsRoot); freeCarsBST(carsRoot); return 0; }
             choice = -1; // set to an invalid choice to force the loop to repeat
             continue;
         }

@@ -116,9 +116,9 @@ void locNearSt(Station* stationsRoot) {
     double userX, userY;
     printf("\n--- Locate Nearest Station ---\n");
     printf("Enter your X coordinate: ");
-    if (scanf("%lf", &userX) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); return; }
+    if (scanf("%lf", &userX) != 1) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid input.\n"); return; }
     printf("Enter your Y coordinate: ");
-    if (scanf("%lf", &userY) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); return; }
+    if (scanf("%lf", &userY) != 1) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid input.\n"); return; }
     if (stationsRoot == NULL) { printf("System Error: There are no stations loaded.\n"); return; }
     Station* nearestStation = NULL;
     double minDistance = DBL_MAX;
@@ -151,7 +151,7 @@ void chargeCar(Station* stationsRoot, tCar** carsRoot) {
     printf("\n--- Charge Car ---\n");
     printf("Enter Station ID: ");
     if (scanf("%d", &stationId) != 1) {
-        while (getchar() != '\n');
+        { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} }
         printf("Invalid input.\n");
         return;
     }
@@ -172,7 +172,7 @@ void chargeCar(Station* stationsRoot, tCar** carsRoot) {
         printf("Car not found in database. Let's register it.\n");
         printf("Select charging type (0: FAST, 1: MID, 2: SLOW): ");
         if (scanf("%d", &typeChoice) != 1 || typeChoice < 0 || typeChoice > 2) {
-            while (getchar() != '\n');
+            { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} }
             printf("Invalid choice.\n");
             return;
         }
@@ -220,7 +220,7 @@ void chargeCar(Station* stationsRoot, tCar** carsRoot) {
         printf("Do you want to wait in the queue? (y/n): ");
         scanf(" %c", &choice);
         if (choice == 'y' || choice == 'Y') {
-            enqueue(&station->carQueue, car);
+            if (!enqueue(&station->carQueue, car)) { fprintf(stderr, "Queue allocation failed.\n"); return; }
             station->nCars++;
             car->inqueue = 1; //  update the cars state to reflect its in a queue
             printf("Car %s has been added to the waiting queue at station %d.\n", car->nLicense, station->id);
@@ -306,7 +306,7 @@ void stopCharge(Station* stationsRoot, tCar* carsRoot) {
     printf("\n--- Stop Charging ---\n");
     printf("Enter Car License Number: ");
     if (scanf("%9s", licenseNum) != 1) {
-        while (getchar() != '\n');
+        { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} }
         printf("Invalid input.\n");
         return;
     }
@@ -408,7 +408,7 @@ void dispCarsAtSt(Station* stationsRoot) {
     int stationId;
     printf("\n--- Display Cars at Station ---\n");
     printf("Enter Station ID: ");
-    if (scanf("%d", &stationId) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); return; }
+    if (scanf("%d", &stationId) != 1) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid input.\n"); return; }
     Station* station = searchStationByID(stationsRoot, stationId);
     if (!station) { printf("ERROR: Station with ID %d not found.\n", stationId); return; }
     printf("\n--- Status for Station: %s (ID: %d) ---\n", station->name, station->id);
@@ -446,7 +446,7 @@ void reportStStat(Station* stationsRoot) {
     printf("\n--- Station Statistics Report ---\n");
     printf("Enter Station ID: ");
     if (scanf("%d", &stationId) != 1){
-        while (getchar() != '\n');
+        { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} }
         printf("Invalid input.\n"); 
         return; 
     }
@@ -572,12 +572,12 @@ void addNewPort(Station* stationsRoot) {
     int stationId;
     printf("\n--- Add New Port ---\n");
     printf("Enter Station ID to add a port to: ");
-    if (scanf("%d", &stationId) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); return; }
+    if (scanf("%d", &stationId) != 1) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid input.\n"); return; }
     Station* station = searchStationByID(stationsRoot, stationId);
     if (!station) { printf("ERROR: Station with ID %d not found.\n", stationId); return; }
     int typeChoice;
     printf("Select new port type (0: FAST, 1: MID, 2: SLOW): ");
-    if (scanf("%d", &typeChoice) != 1 || typeChoice < 0 || typeChoice > 2) { while (getchar() != '\n'); printf("Invalid choice.\n"); return; }
+    if (scanf("%d", &typeChoice) != 1 || typeChoice < 0 || typeChoice > 2) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid choice.\n"); return; }
     PortType newType = (PortType)typeChoice;
     int maxPortNum = 0;
     Port* p = station->port_list_head;
@@ -684,11 +684,11 @@ void remOutOrderPort(Station* stationsRoot) {
     int stationId, portNum;
     printf("\n--- Remove Out-of-Order Port ---\n");
     printf("Enter Station ID: ");
-    if (scanf("%d", &stationId) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); return; }
+    if (scanf("%d", &stationId) != 1) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid input.\n"); return; }
     Station* station = searchStationByID(stationsRoot, stationId);
     if (!station) { printf("ERROR: Station with ID %d not found.\n", stationId); return; }
     printf("Enter number of the port to remove: ");
-    if (scanf("%d", &portNum) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); return; }
+    if (scanf("%d", &portNum) != 1) { { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} } printf("Invalid input.\n"); return; }
     Port** pp = &station->port_list_head;
     while (*pp) {
         Port* entry = *pp;
@@ -715,12 +715,10 @@ void remOutOrderPort(Station* stationsRoot) {
 /* finds the node with the minimum value in a Binary Search Tree this helper function starts at a given node and repeatedly
 traverses to the left child, as the leftmost node in a BST is always the one with the minimum value
     input: Station* node - the root of the tree or subtree to be searched */
-static Station* findMinStation(Station* node) {
-    Station* current = node;
-    while (current && current->left != NULL) {
-        current = current->left;
-    }
-    return current;
+static Station* detachMinStation(Station* root, Station** minimum) {
+    if (!root->left) { *minimum = root; return root->right; }
+    root->left = detachMinStation(root->left, minimum);
+    return root;
 }
 
 /* recursively searches for and deletes a station node from a Binary Search Tree 
@@ -768,12 +766,15 @@ static Station* deleteStationNode(Station* root, int id) {
             return temp;
         }
 
-        Station* temp = findMinStation(root->right);
-        root->id = temp->id;
+        Station* successor = NULL;
+        Station* right = detachMinStation(root->right, &successor);
+        successor->left = root->left;
+        successor->right = right;
         free(root->name);
-        root->name = (char*)malloc(strlen(temp->name) + 1);
-        strcpy(root->name, temp->name);
-        root->right = deleteStationNode(root->right, temp->id);
+        freePortsList(root->port_list_head);
+        freeQueue(&root->carQueue);
+        free(root);
+        return successor;
     }
     return root;
 }
@@ -789,7 +790,7 @@ Station* closeSt(Station* stationsRoot) {
     printf("\n--- Close Station ---\n");
     printf("Enter ID of the station to close: ");
     if (scanf("%d", &stationId) != 1) {
-        while (getchar() != '\n');
+        { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} }
         return stationsRoot;
     }
     Station* stationToClose = searchStationByID(stationsRoot, stationId);

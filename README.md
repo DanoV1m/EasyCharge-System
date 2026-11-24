@@ -32,13 +32,16 @@ The system follows a modular architecture. Below is a high-level overview of the
 ---
 
 ## Installation & Build
-Follow these steps to compile and run the application:
 
-1. **Clone the repository:**
-   ```bash
+From the repository root, with GCC and Make installed:
 
-   git clone https://github.com/DanoV1m/EasyCharge-System.git
+```sh
+make
+./bin/easycharge
+```
 
-   ---
-*Designed and implemented by [Idan Vimenetz]*
+Run against a disposable copy of the sample data; this simulator modifies its data files. It is not a production EV charging service.
 
+## Validation and limitations
+
+The review branch fixes two-child BST deletion, bounded CSV parsing, queue allocation and EOF handling. Run sanitizer-enabled builds and regression tests before use. Multi-file persistence is still non-transactional and requires a separate redesign.

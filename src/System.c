@@ -26,8 +26,9 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
     fgets(line_buffer, sizeof(line_buffer), fp); // skip header
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int id, numPorts; char name[100]; double x, y;
-        sscanf(line_buffer, "%d,%[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y);
-        *stationsRoot = addStationToBST(*stationsRoot, createStation(id, name, numPorts, x, y));
+        if (sscanf(line_buffer, "%d,%99[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y) != 5) continue;
+        Station* st = createStation(id, name, numPorts, x, y);
+        if (st) *stationsRoot = addStationToBST(*stationsRoot, st);
     }
     fclose(fp);
 
@@ -39,7 +40,7 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
     fgets(line_buffer, sizeof(line_buffer), fp); // skip header
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         char license[10], portTypeStr[10]; double totalPayed; int inQueue;
-        sscanf(line_buffer, "%[^,],%[^,],%lf,%*d,%*d,%d", license, portTypeStr, &totalPayed, &inQueue);
+        if (sscanf(line_buffer, "%9[^,],%9[^,],%lf,%*d,%d", license, portTypeStr, &totalPayed, &inQueue) != 4) continue;
         Car* newCar = createCar(license, stringToPortType(portTypeStr));
         if (newCar) { // safety check
             newCar->totalPayed = totalPayed;
@@ -58,7 +59,7 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int stationId, portNum, status, year, month, day, hour, min;
         char portTypeStr[10], carLicense[20] = "NULL";
-        sscanf(line_buffer, "%d,%d,%[^,],%d,%d,%d,%d,%d,%d,%s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense);
+        if (sscanf(line_buffer, "%d,%d,%9[^,],%d,%d,%d,%d,%d,%d,%19s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense) != 10) continue;
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
         if (targetStation) {
             Port* newPort = createPort(portNum, stringToPortType(portTypeStr));
@@ -85,11 +86,11 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
     fgets(line_buffer, sizeof(line_buffer), fp); // skip header
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int stationId; char carLicense[20];
-        sscanf(line_buffer, "%[^,],%d", carLicense, &stationId);
+        if (sscanf(line_buffer, "%19[^,],%d", carLicense, &stationId) != 2) continue;
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
         Car* targetCar = searchCar(*carsRoot, carLicense);
         if (targetStation && targetCar) {
-            enqueue(&targetStation->carQueue, targetCar);
+            if (!enqueue(&targetStation->carQueue, targetCar)) continue;
             targetStation->nCars++;
             targetCar->inqueue = 1; 
         }

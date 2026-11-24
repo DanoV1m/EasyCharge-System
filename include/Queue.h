@@ -21,7 +21,7 @@ typedef struct {
 // function prototypes
 void initQueue(CarQueue* q);                    // prepares a new queue to be used 
 int isQueueEmpty(const CarQueue* q);            // checks if theres anything in the queue
-void enqueue(CarQueue* q, struct Car* car);     // adds an item to the end of the queue
+int enqueue(CarQueue* q, struct Car* car);     // adds an item to the end of the queue
 struct Car* dequeue(CarQueue* q);               // removes and returns the item from the front
 void freeQueue(CarQueue* q);                    // cleans up all memory used by the queues nodes
 

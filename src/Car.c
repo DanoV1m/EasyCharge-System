@@ -8,6 +8,7 @@
   input: PortType type - the car's preferred charging type
  output: Car* - a pointer to the newly allocated Car struct, or NULL on failure */
 Car* createCar(const char* license, PortType type) {
+    if (!license || strlen(license) >= sizeof(((Car*)0)->nLicense)) return NULL;
     Car* pCar = (Car*)malloc(sizeof(Car));
     if (!pCar) {
         return NULL;
@@ -26,6 +27,7 @@ Car* createCar(const char* license, PortType type) {
  output: tCar* - the new root of the BST */
 
 tCar* addCarToBST(tCar* root, Car* car) {
+    if (!car) return root;
     if (root == NULL) {
         tCar* node = (tCar*)malloc(sizeof(tCar));
         if (!node) {
@@ -134,13 +136,11 @@ void dispTopCustomers(tCar* root) {
     free(carArray);
 }
 
-// helper function to find the minimum value node in a tCar BST
-static tCar* findMin(tCar* node) {
-    tCar* current = node;
-    while (current && current->left != NULL) {
-        current = current->left;
-    }
-    return current;
+// Detach the successor node without releasing its shared Car object.
+static tCar* detachMinCar(tCar* root, tCar** minimum) {
+    if (!root->left) { *minimum = root; return root->right; }
+    root->left = detachMinCar(root->left, minimum);
+    return root;
 }
 
 // this function frees and deletes the tCar node and the Car data it points to
@@ -172,24 +172,13 @@ static tCar* deleteCarNode(tCar* root, const char* license) {
             return temp;
         }
 
-        // find the inorder successor
-        tCar* temp = findMin(root->right); 
-
+        tCar* successor = NULL;
+        tCar* right = detachMinCar(root->right, &successor);
+        successor->left = root->left;
+        successor->right = right;
         free(root->p2car);
-        root->p2car = temp->p2car;
-
-         // now, the original root node has the correct data
-        // find the right node 
-        tCar* successor = findMin(root->right);
-
-        // copy the car data pointer to the current node
-        Car* carToFree = root->p2car;
-        root->p2car = successor->p2car;
-        successor->p2car = carToFree; // temporarily give the old data to the successor
-        // so it can be found and freed correctly
-
-        // recursively delete the successor, which now holds the data to be freed
-        root->right = deleteCarNode(root->right, carToFree->nLicense);
+        free(root);
+        return successor;
     }
     return root;
 }
@@ -239,7 +228,7 @@ tCar* remCustomer(tCar* root, Station* stationsRoot) {
     printf("\n--- Remove Customer ---\n");
     printf("Enter license number of the car to remove: ");
     if (scanf("%9s", licenseNum) != 1) {
-        while (getchar() != '\n');
+        { int ch; while ((ch = getchar()) != '\n' && ch != EOF) {} }
         printf("Invalid input.\n");
         return root;
     }
