@@ -25,33 +25,34 @@ static PortType stringToPortType(const char* str) {
 }
 
 // loads all data from txt files into the systems memory
-void loadFiles(Station** stationsRoot, tCar** carsRoot) {
+int loadFiles(Station** stationsRoot, tCar** carsRoot) {
     FILE* fp = NULL;
     char line_buffer[MAX_LINE_LEN];
 
     // load Stations from data folder
     if ((fp = fopen("data/Stations.txt", "r")) == NULL) { 
         perror("Error opening data/Stations.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int id, numPorts; char name[100]; double x, y;
-        if (sscanf(line_buffer, "%d,%99[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y) != 5) continue;
+        if (sscanf(line_buffer, "%d,%99[^,],%d,%lf,%lf", &id, name, &numPorts, &x, &y) != 5) { fclose(fp); return 0; }
         Station* st = createStation(id, name, numPorts, x, y);
         if (st) *stationsRoot = addStationToBST(*stationsRoot, st);
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
 
     // load Cars from data folder
     if ((fp = fopen("data/Cars.txt", "r")) == NULL) { 
         perror("Error opening data/Cars.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         char license[10], portTypeStr[10]; double totalPayed; int inQueue;
-        if (sscanf(line_buffer, "%9[^,],%9[^,],%lf,%*d,%d", license, portTypeStr, &totalPayed, &inQueue) != 4) continue;
+        if (sscanf(line_buffer, "%9[^,],%9[^,],%lf,%*d,%d", license, portTypeStr, &totalPayed, &inQueue) != 4) { fclose(fp); return 0; }
         Car* newCar = createCar(license, stringToPortType(portTypeStr));
         if (newCar) { // safety check
             newCar->totalPayed = totalPayed;
@@ -59,18 +60,19 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
             *carsRoot = addCarToBST(*carsRoot, newCar);
         }
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
 
     // load Ports from data folder
     if ((fp = fopen("data/Ports.txt", "r")) == NULL) { 
         perror("Error opening data/Ports.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int stationId, portNum, status, year, month, day, hour, min;
         char portTypeStr[10], carLicense[20] = "NULL";
-        if (sscanf(line_buffer, "%d,%d,%9[^,],%d,%d,%d,%d,%d,%d,%19s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense) != 10) continue;
+        if (sscanf(line_buffer, "%d,%d,%9[^,],%d,%d,%d,%d,%d,%d,%19s", &stationId, &portNum, portTypeStr, &status, &year, &month, &day, &hour, &min, carLicense) != 10) { fclose(fp); return 0; }
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
         if (targetStation) {
             Port* newPort = createPort(portNum, stringToPortType(portTypeStr));
@@ -87,17 +89,18 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
             }
         }
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
 
     // load Car Queues from data folder
     if ((fp = fopen("data/LineOfCars.txt", "r")) == NULL) { 
         perror("Error opening data/LineOfCars.txt"); 
-        return; 
+        return 0; 
     }
-    fgets(line_buffer, sizeof(line_buffer), fp); // skip header
+    if (!fgets(line_buffer, sizeof(line_buffer), fp)) { fclose(fp); return 0; }
     while (fgets(line_buffer, sizeof(line_buffer), fp)) {
         int stationId; char carLicense[20];
-        if (sscanf(line_buffer, "%19[^,],%d", carLicense, &stationId) != 2) continue;
+        if (sscanf(line_buffer, "%19[^,],%d", carLicense, &stationId) != 2) { fclose(fp); return 0; }
         Station* targetStation = searchStationByID(*stationsRoot, stationId);
         Car* targetCar = searchCar(*carsRoot, carLicense);
         if (targetStation && targetCar) {
@@ -106,7 +109,9 @@ void loadFiles(Station** stationsRoot, tCar** carsRoot) {
             targetCar->inqueue = 1; 
         }
     }
+    if (ferror(fp)) { fclose(fp); return 0; }
     fclose(fp);
+    return 1;
 }
 
 static const char* portTypeToString(PortType type) {

@@ -50,3 +50,5 @@ The review branch fixes two-child BST deletion, bounded CSV parsing, queue alloc
 All four outputs are staged before replacement. POSIX per-file rename is used; group atomicity, crash durability, concurrent writers and Windows replacement semantics are not guaranteed. Use a disposable data directory and keep backups. The CLI regression tests deletion of two-child nodes and a forced staging failure.
 
 Windows uses `MoveFileExA` with replace-existing semantics; POSIX uses rename. Both are tested with disposable synthetic data via CI. Multi-file crash consistency still requires a transaction or a journaled database; do not use for irreplaceable data.
+
+Startup now aborts without writing when a required input file is missing, unreadable or a row fails the expected field parsing. This is not full semantic validation or transactional storage. Regression cases exercise missing and malformed inputs against disposable data.

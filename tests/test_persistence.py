@@ -31,3 +31,16 @@ with tempfile.TemporaryDirectory() as tmp:
     run("0\n")
     assert all((data / name).read_bytes() == content for name, content in original.items())
     assert not (data / "Cars.txt.tmp").exists()
+
+    # A missing input or malformed row must never trigger a partial-state save.
+    (data / "Ports.txt.tmp").rmdir()
+    (data / "LineOfCars.txt").unlink()
+    originals = {p.name:p.read_bytes() for p in data.iterdir()}
+    result = subprocess.run([binary], input="0\n", text=True, cwd=root, timeout=15, capture_output=True)
+    assert result.returncode != 0
+    assert {p.name:p.read_bytes() for p in data.iterdir()} == originals
+    (data / "LineOfCars.txt").write_text("CarLicense,StationID\ninvalid row\n")
+    originals = {p.name:p.read_bytes() for p in data.iterdir()}
+    result = subprocess.run([binary], input="0\n", text=True, cwd=root, timeout=15, capture_output=True)
+    assert result.returncode != 0
+    assert {p.name:p.read_bytes() for p in data.iterdir()} == originals

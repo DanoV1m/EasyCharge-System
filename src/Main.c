@@ -10,7 +10,12 @@ int main() {
     int needs_update = 0; // signal to determine if files need to be saved
 
     printf("Loading system data from files...\n");
-    loadFiles(&stationsRoot, &carsRoot);
+    if (!loadFiles(&stationsRoot, &carsRoot)) {
+        fprintf(stderr, "Data load failed; existing files will not be modified.\n");
+        freeStationsBST(stationsRoot);
+        freeCarsBST(carsRoot);
+        return 1;
+    }
     printf("Data loaded.\n");
 
         // this is the main program loop. it continues until the user chooses to exit
