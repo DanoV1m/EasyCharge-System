@@ -131,40 +131,41 @@ static void saveStationsRecursive(FILE* stations_fp, FILE* ports_fp, FILE* queue
     saveStationsRecursive(stations_fp, ports_fp, queues_fp, root->right);
 }
 
+// Stage all four files before replacing any existing data file.
+// Each rename is atomic on POSIX, but the group is NOT a transaction.
 void updateFiles(Station* stationsRoot, tCar* carsRoot) {
-    FILE* fp = NULL;
-
-    // save Cars to data folder
-    if ((fp = fopen("data/Cars.txt", "w")) == NULL) { 
-        perror("Error opening data/Cars.txt for writing"); 
-        return; 
+    const char* target[] = {"data/Cars.txt", "data/Stations.txt", "data/Ports.txt", "data/LineOfCars.txt"};
+    const char* staged[] = {"data/Cars.txt.tmp", "data/Stations.txt.tmp", "data/Ports.txt.tmp", "data/LineOfCars.txt.tmp"};
+    FILE* files[4] = {NULL, NULL, NULL, NULL};
+    int ok = 1;
+    for (int i = 0; i < 4; ++i) {
+        files[i] = fopen(staged[i], "w");
+        if (!files[i]) { ok = 0; break; }
     }
-    fprintf(fp, "License,Type,TotalPaid,IsCharging,IsInQueue,DummyValue\n");
-    saveCarsRecursive(fp, carsRoot);
-    fclose(fp);
-
-    FILE* stations_fp = fopen("data/Stations.txt", "w");
-    FILE* ports_fp = fopen("data/Ports.txt", "w");
-    FILE* queues_fp = fopen("data/LineOfCars.txt", "w");
-
-    if (!stations_fp || !ports_fp || !queues_fp) {
-        perror("Error opening data files for writing");
-        if (stations_fp) fclose(stations_fp);
-        if (ports_fp) fclose(ports_fp);
-        if (queues_fp) fclose(queues_fp);
+    if (ok) {
+        fprintf(files[0], "License,Type,TotalPaid,IsCharging,IsInQueue,DummyValue\n");
+        saveCarsRecursive(files[0], carsRoot);
+        fprintf(files[1], "ID,Name,NumPorts,CoordX,CoordY\n");
+        fprintf(files[2], "StationID,PortNum,Type,Status,Year,Month,Day,Hour,Min,CarLicense\n");
+        fprintf(files[3], "CarLicense,StationID\n");
+        saveStationsRecursive(files[1], files[2], files[3], stationsRoot);
+    }
+    for (int i = 0; i < 4; ++i) {
+        if (!files[i]) continue;
+        if (ferror(files[i])) ok = 0;
+        if (fclose(files[i]) != 0) ok = 0;
+    }
+    if (!ok) {
+        fprintf(stderr, "Save staging failed; original data files were not modified.\n");
+        for (int i = 0; i < 4; ++i) remove(staged[i]);
         return;
     }
-
-    fprintf(stations_fp, "ID,Name,NumPorts,CoordX,CoordY\n");
-    fprintf(ports_fp, "StationID,PortNum,Type,Status,Year,Month,Day,Hour,Min,CarLicense\n");
-    fprintf(queues_fp, "CarLicense,StationID\n");
-
-    saveStationsRecursive(stations_fp, ports_fp, queues_fp, stationsRoot);
-
-    fclose(stations_fp);
-    fclose(ports_fp);
-    fclose(queues_fp);
-
+    for (int i = 0; i < 4; ++i) {
+        if (rename(staged[i], target[i]) != 0) {
+            fprintf(stderr, "Save replacement failed; staged files may be needed for recovery.\n");
+            return;
+        }
+    }
     printf("System state saved to data folder.\n");
 }
 

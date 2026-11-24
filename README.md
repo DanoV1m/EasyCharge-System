@@ -45,3 +45,6 @@ Run against a disposable copy of the sample data; this simulator modifies its da
 ## Validation and limitations
 
 The review branch fixes two-child BST deletion, bounded CSV parsing, queue allocation and EOF handling. Run sanitizer-enabled builds and regression tests before use. Multi-file persistence is still non-transactional and requires a separate redesign.
+
+### Persistence review
+All four outputs are staged before replacement. POSIX per-file rename is used; group atomicity, crash durability, concurrent writers and Windows replacement semantics are not guaranteed. Use a disposable data directory and keep backups. The CLI regression tests deletion of two-child nodes and a forced staging failure.
